@@ -39,7 +39,5 @@ public:
 public:
     bool m_Scored = false;
     float m_PosX = 128;
-
-private:
     uint8_t m_GapOrigin = 0;
 };

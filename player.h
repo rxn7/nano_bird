@@ -22,7 +22,15 @@ public:
 			return;
 		}
 
-		// TODO: Check for collision
+		// Pipe collision check
+
+		if(pipe.m_PosX > PLAYER_POS_X + PLAYER_WIDTH)
+			return;
+
+		if(pipe.m_PosX + PIPE_WIDTH < PLAYER_POS_X)
+			return;
+
+		m_Dead = m_PosY + PLAYER_HEIGHT > pipe.m_GapOrigin + PIPE_GAP_SIZE || m_PosY < pipe.m_GapOrigin;
 	}
 
 	void draw(U8G2 &u8g) const {
