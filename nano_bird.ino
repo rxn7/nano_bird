@@ -1,24 +1,54 @@
-#include "U8glib.h"
+#include "U8g2lib.h"
 #include "player.h"
+#include "pipe.h"
 
-constexpr int BUTTON_PIN = 2;
-constexpr uint32_t GAME_OVER_SCREEN_DURATION = 2000;
-const char *GAME_OVER_TEXT = "GAME OVER!";
+constexpr uint8_t BUTTON_PIN = 2;
+const char *SCORE_TEXT_PREFIX = "Score: ";
+const char *WAITING_FOR_INPUT_TEXT = "Tap to play";
 
-U8GLIB_SSD1306_128X64 u8g(U8G_I2C_OPT_DEV_0 | U8G_I2C_OPT_FAST | U8G_I2C_OPT_NO_ACK);
+U8G2_SSD1306_128X64_NONAME_F_HW_I2C u8g(U8G2_R0);
+
+uint8_t waitingForInputTextPosX = 0;
+uint8_t scoreTextPosX = 0;
+
+uint16_t score = 0;
+bool startScreenRendered = false;
+bool waitingForInput = true;
+char scoreTextBuffer[14];
+
 Player player;
-uint32_t gameOverScreenTimer = 0;
+Pipe pipe;
 
 void setup() {
-	Serial.begin(9600);
-	u8g.setFont(u8g_font_6x10);
+    strcpy(scoreTextBuffer, SCORE_TEXT_PREFIX);
+
+    u8g.setPowerSave(true);
+    u8g.begin();
+    u8g.setFont(u8g2_font_profont12_tr);
+
+    waitingForInputTextPosX = 64 - u8g.getStrWidth(WAITING_FOR_INPUT_TEXT) / 2;
+
+    Serial.begin(9600);
+
 	pinMode(BUTTON_PIN, INPUT_PULLUP);
 	pinMode(LED_BUILTIN, OUTPUT);
+
+    reset();
 }
 
-void game_over() {
-	gameOverScreenTimer = 1;
+void reset() {
+    static size_t prefixSize = strlen(SCORE_TEXT_PREFIX);
+    snprintf(scoreTextBuffer + prefixSize, sizeof(scoreTextBuffer) - prefixSize, "%u", score);
+
+    scoreTextPosX = 64 - u8g.getStrWidth(scoreTextBuffer) / 2;
+
+    waitingForInput = true;
+    startScreenRendered = false;
+	score = 0;
+
 	player = {};
+    pipe.reset();
+
 }
 
 void loop() {
@@ -32,34 +62,49 @@ void loop() {
 	const bool isBtnPressed = !btnValue && lastBtnValue;
 	lastBtnValue = btnValue;
 
-	if(gameOverScreenTimer != 0) {
-		const uint8_t offset = u8g.getStrWidth(GAME_OVER_TEXT);
-		u8g.firstPage();
-		do {
-			u8g.drawStr(64 - offset / 2, 22, GAME_OVER_TEXT);
-		} while(u8g.nextPage());
+	if(waitingForInput) {
+        // Render the start screen only once, it doesn't change
+        if(!startScreenRendered) {
+            startScreenRendered = true;
 
-		gameOverScreenTimer += deltaTime;
+            u8g.drawStr(waitingForInputTextPosX, 48, WAITING_FOR_INPUT_TEXT);
+            u8g.drawStr(scoreTextPosX, 32, scoreTextBuffer);
 
-		if(gameOverScreenTimer < GAME_OVER_SCREEN_DURATION) {
-			return;
-		}
+            goto display_and_ret;
+        }
 
-		gameOverScreenTimer = 0;
+        if (isBtnPressed) {
+            reset();
+            waitingForInput = false;
+        }
+
+        // Save some power
+        delay(50);
+
+        return;
 	}
 
 	if (isBtnPressed) {
 		player.jump();
 	}
 
-	player.update(deltaTime);
+    pipe.update(deltaTime);
+	player.update(deltaTime, pipe);
+
 	if(player.is_dead()) {
-		game_over();
-		return;
+		reset();
+		goto display_and_ret;
 	}
 
-	u8g.firstPage();
-	do {
-		player.draw(u8g);
-	} while (u8g.nextPage());
+    if(!pipe.m_Scored && pipe.m_PosX + PIPE_WIDTH / 2 <= PLAYER_POS_X) {
+        ++score;
+        pipe.m_Scored = true;
+    }
+
+    pipe.draw(u8g);
+    player.draw(u8g);
+
+display_and_ret:
+    u8g.sendBuffer();
+    u8g.clearBuffer();
 }
