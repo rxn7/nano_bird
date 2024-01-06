@@ -2,10 +2,11 @@
 
 #include "U8g2lib.h"
 
-constexpr uint8_t PIPE_GAP_SIZE = 32;
+constexpr uint8_t PIPE_GAP_SIZE = 28;
 constexpr uint8_t PIPE_WIDTH = 15;
 constexpr uint8_t PIPE_GAP_MARGIN = 5;
 constexpr float PIPE_SCROLL_SPEED = 0.05f;
+constexpr float PIPE_SCROLL_SPEED_INCREMENT = 0.01f;
 
 class Pipe {
 public:
@@ -19,8 +20,8 @@ public:
         m_Scored = false;
     }
 
-    void update(const uint16_t deltaTime) {
-        m_PosX -= PIPE_SCROLL_SPEED * deltaTime;
+    void update(const uint16_t deltaTime, const float scrollSpeed) {
+        m_PosX -= scrollSpeed * deltaTime;
         if(m_PosX <= -PIPE_WIDTH) {
             reset();
         }
