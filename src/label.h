@@ -1,6 +1,7 @@
-#pragma once
+#ifndef __LABEL_H__
+#define __LABEL_H__
 
-#include "U8g2lib.h"
+#include "global.h"
 
 class Label {
 public:
@@ -22,3 +23,5 @@ private:
     uint8_t m_PosY;
     U8G2 &m_U8g;
 };
+
+#endif
