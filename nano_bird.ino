@@ -1,19 +1,19 @@
 #include "src/games/flappy_bird/flappy_bird.h"
+#include "src/push_button.h"
 
 U8G2_SSD1306_128X64_NONAME_F_HW_I2C u8g(U8G2_R0);
-bool swapDisplayBuffer = true;
 Game *game;
+PushButton mainButton(2);
+bool swapDisplayBuffer = true;
 
 void set_game(Game *newGame) {
-    if(game != nullptr) {
+    if(game != nullptr)
         delete game;
-    }
 
     game = newGame;
 }
 
 void setup() {
-	pinMode(BUTTON_PIN, INPUT_PULLUP);
 	pinMode(LED_BUILTIN, OUTPUT);
 
     u8g.setPowerSave(true);
@@ -29,12 +29,7 @@ void loop() {
 	const uint16_t deltaTime = now - lastFrameTime;
 	lastFrameTime = now;
 
-	const bool btnValue = digitalRead(BUTTON_PIN);
-	static bool lastBtnValue = HIGH;
-	const bool isBtnPressed = !btnValue && lastBtnValue;
-	lastBtnValue = btnValue;
-
-    game->loop(deltaTime, isBtnPressed);
+    game->loop(deltaTime, mainButton.is_pressed());
 
     if(swapDisplayBuffer) {
         u8g.sendBuffer();

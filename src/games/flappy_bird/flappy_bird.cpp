@@ -1,7 +1,6 @@
 #include "flappy_bird.h"
 
-FlappyBird::FlappyBird() : scoreStartScreenLabel(32, u8g), waitingForInputLabel(48, u8g), scoreLabel(64, u8g) {
-    waitingForInputLabel.set_text("Tap to play");
+FlappyBird::FlappyBird() : scoreStartScreenLabel(32), waitingForInputLabel(48, "Tap to play"), scoreLabel(64) {
     reset();
 }
 
