@@ -15,17 +15,15 @@ private:
     void set_score(const uint16_t newScore);
 
 private:
-    Label scoreStartScreenLabel;
-    Label waitingForInputLabel;
-    Label scoreLabel;
+    Label m_ScoreLabel;
 
-    uint16_t score = 0;
-    float scrollSpeed = PIPE_SCROLL_SPEED;
-    bool startScreenRendered = false;
-    bool waitingForInput = true;
+    uint16_t m_Score = 0;
+    float m_ScrollSpeed = PIPE_SCROLL_SPEED;
+    bool m_StartScreenRendered = false;
+    bool m_WaitingForInput = true;
 
-    Player player;
-    Pipe pipe;
+    Player m_Player;
+    Pipe m_Pipe;
 };
 
 #endif

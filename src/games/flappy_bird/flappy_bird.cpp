@@ -1,17 +1,21 @@
 #include "flappy_bird.h"
 
-FlappyBird::FlappyBird() : scoreStartScreenLabel(32), waitingForInputLabel(48, "Tap to play"), scoreLabel(64) {
+static const char *START_SCREEN_TEXT_1 = "Flappy Bird";
+static const char *START_SCREEN_TEXT_2 = "Tap to play";
+
+FlappyBird::FlappyBird() : m_ScoreLabel(64) {
     reset();
 }
 
 void FlappyBird::loop(const uint16_t deltaTime, const bool isBtnPressed) {
-	if(waitingForInput) {
+	if(m_WaitingForInput) {
         // Render the start screen only once, it doesn't change
-        if(!startScreenRendered) {
-            startScreenRendered = true;
+        if(!m_StartScreenRendered) {
+            m_StartScreenRendered = true;
 
-            waitingForInputLabel.render();
-            scoreStartScreenLabel.render();
+            u8g.drawStr(32, 12, START_SCREEN_TEXT_1);
+            u8g.drawStr(32, 36, START_SCREEN_TEXT_2);
+            m_ScoreLabel.render();
 
             swapDisplayBuffer = true;
             return;
@@ -21,7 +25,7 @@ void FlappyBird::loop(const uint16_t deltaTime, const bool isBtnPressed) {
 
         if (isBtnPressed) {
             reset();
-            waitingForInput = false;
+            m_WaitingForInput = false;
         }
 
         // Save some power
@@ -32,47 +36,44 @@ void FlappyBird::loop(const uint16_t deltaTime, const bool isBtnPressed) {
     swapDisplayBuffer = true;
 
 	if (isBtnPressed) {
-		player.jump();
+		m_Player.jump();
 	}
 
-    pipe.update(deltaTime, scrollSpeed);
-	player.update(deltaTime, pipe);
+    m_Pipe.update(deltaTime, m_ScrollSpeed);
+	m_Player.update(deltaTime, m_Pipe);
 
-	if(player.is_dead()) {
+	if(m_Player.is_dead()) {
 		reset();
         return;
 	}
 
-    if(!pipe.m_Scored && pipe.m_PosX + PIPE_WIDTH / 2 <= PLAYER_POS_X) {
-        set_score(score + 1);
-        pipe.m_Scored = true;
-        scrollSpeed += PIPE_SCROLL_SPEED_INCREMENT;
+    if(!m_Pipe.m_Scored && m_Pipe.m_PosX + PIPE_WIDTH / 2 <= PLAYER_POS_X) {
+        set_score(m_Score + 1);
+        m_Pipe.m_Scored = true;
+        m_ScrollSpeed += PIPE_SCROLL_SPEED_INCREMENT;
     }
 
-    scoreLabel.render();
+    m_ScoreLabel.render();
 
-    pipe.draw();
-    player.draw();
+    m_Pipe.draw();
+    m_Player.draw();
 }
 
 void FlappyBird::reset() {
-    static char scoreStartScreenTextBuffer[14] = "\0";
-    snprintf(scoreStartScreenTextBuffer, sizeof(scoreStartScreenTextBuffer), "Score: %u", score);
-    scoreStartScreenLabel.set_text(scoreStartScreenTextBuffer);
+    m_ScrollSpeed = PIPE_SCROLL_SPEED;
 
-    scrollSpeed = PIPE_SCROLL_SPEED;
-
-    waitingForInput = true;
-    startScreenRendered = false;
+    m_WaitingForInput = true;
+    m_StartScreenRendered = false;
     set_score(0);
 
-	player = {};
-    pipe.reset();
+	m_Player = {};
+    m_Pipe.reset();
 }
 
 void FlappyBird::set_score(const uint16_t newScore) {
-    score = newScore;
-    static char scoreTextBuffer[6] = "\0";
-    snprintf(scoreTextBuffer, sizeof(scoreTextBuffer), "%u", score);
-    scoreLabel.set_text(scoreTextBuffer);
+    m_Score = newScore;
+
+    static char scoreTextBuffer[13];
+    snprintf_P(scoreTextBuffer, sizeof(scoreTextBuffer), PSTR("Score: %u"), m_Score);
+    m_ScoreLabel.set_text(scoreTextBuffer);
 }
