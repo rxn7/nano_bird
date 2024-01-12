@@ -10,4 +10,4 @@ Wiring:
   - SDA -> A4
 - Button:
   - GND -> GND
-  - Out -> D2
+  - OUT -> D2
